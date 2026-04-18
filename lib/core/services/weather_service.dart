@@ -14,7 +14,6 @@ class WeatherService {
 
   WeatherService._internal();
 
-  // ✅ 修复：添加 try-catch，捕获 ip-api 异常
   Future<String> getWeather() async {
     try {
       const weather = WeatherApi();
@@ -32,8 +31,8 @@ class WeatherService {
       String weatherStr = _getWeatherDescription(weatherCode);
       return S.current.currentWeather(weatherStr, temperature);
     } catch (e) {
-      // ✅ 出错时返回默认文案，不会崩溃
-      return S.current.weatherUnknown;
+      // 🔴 修复：换成项目里真的存在的文案
+      return "获取天气失败";
     }
   }
 
@@ -90,7 +89,8 @@ class WeatherService {
       case 99:
         return S.current.thunderstormWithLargeHail;
       default:
-        return S.current.unknown;
+        // 🔴 修复：这里也换成固定文字
+        return "未知天气";
     }
   }
 
