@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-// Petto: An intelligent desktop assistant.
+// Petto - An intelligent desktop assistant.
 // Copyright (C) 2025 FunnyCups (https://github.com/funnycups)
 
 import 'package:ipapi/ipapi.dart';
@@ -14,22 +14,27 @@ class WeatherService {
 
   WeatherService._internal();
 
+  // ✅ 修复：添加 try-catch，捕获 ip-api 异常
   Future<String> getWeather() async {
-    const weather = WeatherApi();
-    final GeoData? geoData = await IpApi.getData();
+    try {
+      const weather = WeatherApi();
+      final GeoData? geoData = await IpApi.getData();
 
-    final response = await weather.request(
+      final response = await weather.request(
         latitude: geoData?.lat ?? 0,
         longitude: geoData?.lon ?? 0,
-        current: {WeatherCurrent.weather_code, WeatherCurrent.temperature_2m});
+        current: {WeatherCurrent.weather_code, WeatherCurrent.temperature_2m},
+      );
 
-    final temperature =
-        response.currentData[WeatherCurrent.temperature_2m]!.value;
-    final weatherCode =
-        response.currentData[WeatherCurrent.weather_code]!.value;
+      final temperature = response.currentData[WeatherCurrent.temperature_2m]!.value;
+      final weatherCode = response.currentData[WeatherCurrent.weather_code]!.value;
 
-    String weatherStr = _getWeatherDescription(weatherCode);
-    return S.current.currentWeather(weatherStr, temperature);
+      String weatherStr = _getWeatherDescription(weatherCode);
+      return S.current.currentWeather(weatherStr, temperature);
+    } catch (e) {
+      // ✅ 出错时返回默认文案，不会崩溃
+      return S.current.weatherUnknown;
+    }
   }
 
   String _getWeatherDescription(num weatherCode) {
