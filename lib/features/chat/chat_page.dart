@@ -665,10 +665,10 @@ class _ChatPageState extends State<ChatPage> with WindowListener {
             onPressed: () async {
               await launchUrl(Uri.parse("https://github.com/funnycups/petto"));
             },
-            icon: const Icon(Feather.github),
+            icon: const Icons.code,
           ),
           IconButton(
-            icon: const Icon(Feather.settings),
+            icon: const Icons.settings,
             onPressed: _showSettingsDialog,
           ),
         ],
