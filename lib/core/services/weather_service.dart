@@ -3,8 +3,8 @@
 // Petto - An intelligent desktop assistant.
 // Copyright (C) 2025 FunnyCups (https://github.com/funnycups)
 
-import 'package:ipapi/ipapi.dart';
-import 'package:ipapi/models/geo_data.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:open_meteo/open_meteo.dart';
 import '../../generated/l10n.dart';
 
@@ -17,11 +17,12 @@ class WeatherService {
   Future<String> getWeather() async {
     try {
       const weather = WeatherApi();
-      final GeoData? geoData = await IpApi.getData();
+      // 已替换为国内可用IP定位，不卡50秒
+      final geoData = await _getLocalGeoData();
 
       final response = await weather.request(
-        latitude: geoData?.lat ?? 0,
-        longitude: geoData?.lon ?? 0,
+        latitude: geoData?['lat'] ?? 39.9042,
+        longitude: geoData?['lon'] ?? 116.4074,
         current: {WeatherCurrent.weather_code, WeatherCurrent.temperature_2m},
       );
 
@@ -31,8 +32,30 @@ class WeatherService {
       String weatherStr = _getWeatherDescription(weatherCode);
       return S.current.currentWeather(weatherStr, temperature);
     } catch (e) {
-      // 🔴 修复：换成项目里真的存在的文案
       return "获取天气失败";
+    }
+  }
+
+  // 国内可用IP定位API（完美解析你提供的返回格式）
+  Future<Map<String, double>?> _getLocalGeoData() async {
+    try {
+      final response = await http.get(
+        Uri.parse('https://whois.pconline.com.cn/ipJson.jsp'),
+        headers: {'Referer': 'https://whois.pconline.com.cn'},
+      );
+
+      String text = response.body.trim();
+      // 精准清洗你提供的返回格式
+      text = text.replaceAll('if(window.IPCallBack) {IPCallBack(', '');
+      text = text.replaceAll(');}', '');
+
+      final Map<String, dynamic> data = jsonDecode(text);
+      return {
+        'lat': double.tryParse(data['lat'].toString()) ?? 39.9042,
+        'lon': double.tryParse(data['lon'].toString()) ?? 116.4074,
+      };
+    } catch (e) {
+      return null;
     }
   }
 
@@ -89,7 +112,6 @@ class WeatherService {
       case 99:
         return S.current.thunderstormWithLargeHail;
       default:
-        // 🔴 修复：这里也换成固定文字
         return "未知天气";
     }
   }
